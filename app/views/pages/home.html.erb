@@ -1,2 +1,57 @@
-<h1>Pages#home</h1>
-<p>Find me in app/views/pages/home.html.erb</p>
+<div class="container-fluid">
+  <div class="row vh-100 g-0">
+
+
+    <div class="col-md-3 bg-light border-end d-flex flex-column">
+      <h5 class="p-3">Dashboard</h5>
+      <ul class="list-group flex-grow-1 overflow-auto m-0">
+      >
+      </ul>
+      <small class="text-muted p-3 mt-auto">History</small>
+    </div>
+
+
+    <div class="col-md-9 d-flex flex-column">
+
+
+      <% if @output.present? %>
+        <div class="chat-output border rounded p-3 mb-2" style="background: #f5f5f5; font-family: monospace; max-height: 300px; overflow-y: auto;">
+          <pre><%= @output %></pre>
+        </div>
+      <% end %>
+
+
+      <%= form_with url: "/", method: :post, local: true, class: "flex-shrink-0 p-3" do |f| %>
+        <div class="mb-2">
+          <%= f.text_area :topic, class: "form-control", placeholder: "Enter your topic...", rows: 2, style: "min-height: 60px;" %>
+        </div>
+
+        <div class="row g-2 mb-3">
+          <div class="col-md-3">
+            <%= f.label :audience, "Audience", class: "form-label" %>
+            <%= f.select :audience, ["Students", "Professionals", "Investors"], {}, class: "form-select" %>
+          </div>
+
+          <div class="col-md-3">
+            <%= f.label :tone, "Tone", class: "form-label" %>
+            <%= f.select :tone, ["Formal", "Casual", "Funny", "Serious"], {}, class: "form-select" %>
+          </div>
+
+          <div class="col-md-3">
+            <%= f.label :slides_number, "Slides", class: "form-label" %>
+            <%= f.number_field :slides_number, class: "form-control", min: 1, max: 20 %>
+          </div>
+
+          <div class="col-md-3">
+            <%= f.label :role, "Persona", class: "form-label" %>
+            <%= f.select :role, ["CEO", "Manager", "Engineer", "Intern"], {}, class: "form-select" %>
+          </div>
+        </div>
+
+        <div class="text-end">
+          <%= f.submit "Generate Presentation", class: "btn btn-primary" %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
