@@ -8,10 +8,11 @@ Rails.application.routes.draw do
   # Defines the root path route ("/")
   # root "posts#index"
   Rails.application.routes.draw do
+    get 'chats/show'
     devise_for :users
-
     root to: "pages#home"
-
+    post "/", to: "pages#home"
     get "up" => "rails/health#show", as: :rails_health_check
+    resources :chats, only: [:show]
   end
 end

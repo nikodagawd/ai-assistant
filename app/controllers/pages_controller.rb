@@ -1,42 +1,50 @@
 class PagesController < ApplicationController
-  def home
-    if request.post?
-      topic = params[:topic]
-      audience = params[:audience]
-      tone = params[:tone]
-      slides_number = params[:slides_number]
+  before_action :authenticate_user!
 
-      @output = generate_presentation(topic, audience, tone, slides_number)
-    end
+  def home
+    return unless request.post?
+
+    topic         = params[:topic]
+    audience      = params[:audience]
+    tone          = params[:tone]
+    slides_number = params[:slides_number]
+
+      prompt = build_prompt(topic, audience, tone, slides_number)
+      output = generate_presentation(prompt)
+
+    chat = Chat.create!(
+      user: current_user,
+      topic: topic,
+      audience: audience,
+      tone: tone,
+      slides_number: slides_number,
+      prompt: prompt,
+      output: output
+    )
+    redirect_to chat_path(chat)
   end
 
-  private
+private
 
-  def generate_presentation(topic, audience, tone, slides_number)
-    require "openai"
-
-    client = OpenAI::Client.new(access_token: ENV["OPENAI_API_KEY"])
-
-    prompt = <<~PROMPT
+  def build_prompt(topic, audience, tone, slides_number)
+    <<~PROMPT
       Create a presentation outline on the topic "#{topic}".
       Audience: #{audience}
       Tone: #{tone}
       Number of slides: #{slides_number}
       Output in plain text.
     PROMPT
+  end
 
-    response = client.chat(
-      parameters: {
-        model: "gpt-4",
-        messages: [
-          { role: "user", content: prompt }
-        ],
-        temperature: 0.7
-      }
-    )
+  def generate_presentation(prompt)
+    unless ENV["GITHUB_TOKEN"].present?
+      return ":warning: GitHub token not configured yet. Add it to the .env file."
+    end
 
-    response.dig("choices", 0, "message", "content")
+    chat = RubyLLM.chat(model: "gpt-4.1")
+    response = chat.ask(prompt)
+    response.content
   rescue => e
-    "Error generating presentation: #{e.message}"
+    ":x: Error generating presentation: #{e.message}"
   end
 end
