@@ -1,0 +1,28 @@
+.markdown h1 {
+  font-size: 1.6rem;
+  margin-bottom: 0.75rem;
+}
+
+.markdown h2 {
+  font-size: 1.3rem;
+  margin-top: 1.2rem;
+  margin-bottom: 0.5rem;
+}
+
+.markdown h3 {
+  font-size: 1.1rem;
+  margin-top: 1rem;
+}
+
+.markdown ul {
+  padding-left: 1.2rem;
+}
+
+.markdown li {
+  margin-bottom: 0.3rem;
+}
+
+.markdown p {
+  margin-bottom: 0.6rem;
+  line-height: 1.5;
+}

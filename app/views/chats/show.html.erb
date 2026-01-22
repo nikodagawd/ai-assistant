@@ -1,9 +1,10 @@
 <div class="container-fluid">
   <div class="row vh-100 g-0">
 
-    <!-- Sidebar: historial de chats -->
+    <!-- Sidebar: chat history -->
     <div class="col-md-3 bg-light border-end d-flex flex-column">
       <h5 class="p-3 border-bottom">Your chats</h5>
+
       <ul class="list-group list-group-flush flex-grow-1 overflow-auto">
         <% current_user.chats.order(created_at: :desc).each do |chat_item| %>
           <li class="list-group-item <%= 'active' if chat_item == @chat %>">
@@ -21,73 +22,99 @@
           </li>
         <% end %>
       </ul>
+
       <div class="p-3 border-top">
         <%= link_to "New chat", root_path, class: "btn btn-outline-primary w-100" %>
       </div>
     </div>
 
-    <!-- Main content: chat + slides preview -->
-    <div class="col-md-9 d-flex flex-column p-4">
+    <!-- Main content: messages + slides preview -->
+    <div class="col-md-9 d-flex flex-column p-4 overflow-hidden">
 
-      <!-- Burbuja: tu input -->
-      <div class="d-flex justify-content-end mb-3">
-        <div class="bg-primary text-white p-3 rounded-3" style="max-width: 75%;">
-          <strong>You</strong><br>
-          <pre class="mb-0 text-white"><%= @chat.prompt %></pre>
-        </div>
-      </div>
+      <!-- Messages list -->
+      <div class="flex-grow-1 overflow-auto" style="min-height: 0;">
+        <% first_assistant = @messages.detect { |m| m.role == "assistant" } %>
 
-      <!-- Burbuja: respuesta AI -->
-      <div class="d-flex justify-content-start mb-4">
-        <div class="bg-light border p-3 rounded-3" style="max-width: 75%; width: 100%;">
-          <strong>AI Assistant</strong><br>
-
-          <!-- Preview de slides con Reveal.js -->
-          <div class="reveal preview-reveal mb-2" style="height: 500px; border: 1px solid #ccc; border-radius: 8px; padding: 10px;">
-            <div class="slides">
-              <% slides = @chat.output.split(/Slide \d+:/).map(&:strip).reject(&:empty?) %>
-              <% slides.each_with_index do |slide, index| %>
-                <section>
-                  <% lines = slide.lines.map(&:strip).reject(&:empty?) %>
-                  <% if index == 0 %>
-                    <h2><%= lines.join(" ") %></h2>
-                  <% else %>
-                    <h2><%= lines.shift %></h2>
-                    <% lines.each do |line| %>
-                      <p><%= line %></p>
-                    <% end %>
-                  <% end %>
-                </section>
-              <% end %>
+        <% @messages.each do |message| %>
+          <% if message.role == "user" %>
+            <div class="d-flex justify-content-end mb-3">
+              <div class="bg-primary text-white p-3 rounded-3" style="max-width: 75%;">
+                <strong>You</strong><br>
+                <div class="markdown">
+                  <%= render_markdown(message.content) %>
+                </div>
+              </div>
             </div>
-          </div>
+          <% else %>
+            <div class="d-flex justify-content-start mb-4">
+              <div class="bg-light border p-3 rounded-3" style="max-width: 75%; width: 100%;">
+                <strong>AI Assistant</strong><br>
 
-          <!-- Botón para abrir slides en pantalla completa -->
-          <% if @chat.output.present? %>
-            <div class="mb-2 mt-2">
-              <%= link_to "View Fullscreen", reveal_chat_path(@chat), target: "_blank",
-                          class: "btn btn-outline-success btn-sm" %>
+                <!-- Slides preview only for the first assistant response -->
+                <% if message == first_assistant %>
+                  <div class="reveal preview-reveal mb-2 mt-2"
+                       style="height: 500px; border: 1px solid #ccc; border-radius: 8px; padding: 10px;">
+                    <div class="slides">
+                      <% slides_source = message.content.to_s %>
+                      <% slides = slides_source.split(/Slide \d+:/).map(&:strip).reject(&:empty?) %>
+
+                      <% if slides.any? %>
+                        <% slides.each_with_index do |slide, index| %>
+                          <section>
+                            <% lines = slide.lines.map(&:strip).reject(&:empty?) %>
+                            <% if index == 0 %>
+                              <h2><%= lines.join(" ") %></h2>
+                            <% else %>
+                              <h2><%= lines.shift %></h2>
+                              <% lines.each do |line| %>
+                                <p><%= line %></p>
+                              <% end %>
+                            <% end %>
+                          </section>
+                        <% end %>
+                      <% else %>
+                        <section>
+                          <h2>Preview</h2>
+                          <p>No slides detected (expected: "Slide 1:", "Slide 2:", etc.).</p>
+                        </section>
+                      <% end %>
+                    </div>
+                  </div>
+
+                  <% if slides_source.present? %>
+                    <div class="mb-2 mt-2">
+                      <%= link_to "View Fullscreen",
+                                  reveal_chat_path(@chat),
+                                  target: "_blank",
+                                  class: "btn btn-outline-success btn-sm" %>
+                    </div>
+                  <% end %>
+                <% end %>
+
+                <!-- Always render the assistant message as markdown -->
+                <div class="markdown">
+                  <%= render_markdown(message.content) %>
+                </div>
+              </div>
             </div>
           <% end %>
-        </div>
+        <% end %>
       </div>
 
-      <!-- Formulario de feedback -->
-      <div class="mt-auto">
-        <%= form_with url: chat_path(@chat),
-                      method: :patch,
-                      local: true,
-                      data: { turbo: false } do |f| %>
+      <!-- Follow-up form (creates a new Message) -->
+      <div class="pt-3 border-top">
+        <%= form_with model: [@chat, @message], local: true, data: { turbo: false } do |f| %>
           <div class="input-group">
-            <%= f.text_field :feedback,
-                class: "form-control",
-                placeholder: "Give feedback or ask to improve the output…" %>
-            <button class="btn btn-primary">Send</button>
+            <%= f.text_field :content,
+                             class: "form-control",
+                             placeholder: "Ask a follow-up…" %>
+            <button class="btn btn-primary" type="submit">Send</button>
           </div>
         <% end %>
       </div>
 
     </div>
+
   </div>
 </div>
 
@@ -98,9 +125,11 @@
 
 <script>
   Reveal.initialize({
-    embedded: true,       // Muy importante: evita pantalla completa
+    embedded: true,
     hash: false,
     slideNumber: true,
     transition: 'slide'
   });
 </script>
+```
+

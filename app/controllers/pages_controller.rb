@@ -14,15 +14,22 @@ class PagesController < ApplicationController
     prompt = build_prompt(topic, audience, tone, slides_number)
     output = generate_presentation(prompt)
 
-    chat = Chat.create!(
+    @chat = Chat.create!(
       user: current_user,
       topic: topic,
       audience: audience,
       tone: tone,
-      slides_number: slides_number,
-      prompt: prompt,
-      output: output
+      slides_number: slides_number
     )
+    @chat.messages.create!(
+      role: "user",
+      content: prompt
+    )
+    @chat.messages.create!(
+      role: "assistant",
+      content: output
+    )
+    redirect_to chat_path(@chat)
 
     # Generar archivo HTML Reveal.js descargable
     html_content = render_to_string(
@@ -44,11 +51,12 @@ class PagesController < ApplicationController
 
   def build_prompt(topic, audience, tone, slides_number)
     <<~PROMPT
-      Create a presentation outline on the topic "#{topic}".
+      Create a presentation outline and populate each slide with content on the topic "#{topic}".
+      The content for each of the slides shouldnt be exhaustive but should include the key points that should be mentioned along with sub-bullets on each point.
       Audience: #{audience}
       Tone: #{tone}
       Number of slides: #{slides_number}
-      Output in plain text (format slides as "Slide 1:", "Slide 2:", etc.).
+      Output in Markdown.
     PROMPT
   end
 

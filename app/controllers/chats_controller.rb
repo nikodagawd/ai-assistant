@@ -7,6 +7,9 @@ class ChatsController < ApplicationController
   end
 
   def show
+    @chat = Chat.find(params[:id])
+    @messages = @chat.messages.order(:created_at)
+    @message = Message.new
     @chats = current_user.chats.order(created_at: :desc)
   end
 
