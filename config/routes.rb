@@ -13,6 +13,7 @@ Rails.application.routes.draw do
     root to: "pages#home"
     post "/", to: "pages#home"
     get "up" => "rails/health#show", as: :rails_health_check
-    resources :chats, only: [:show]
+    resources :chats, only: [:show, :index]
+
   end
 end
