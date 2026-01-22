@@ -1,5 +1,7 @@
 Rails.application.routes.draw do
-  # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
+  devise_for :users
+  root to: "pages#home"
+  post "/", to: "pages#home"
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
   # Can be used by load balancers and uptime monitors to verify that the app is live.
@@ -16,6 +18,11 @@ Rails.application.routes.draw do
     resources :chats, only: [:show, :index] do
       resources :messages, only: [:create]
     end
+  get "up" => "rails/health#show", as: :rails_health_check
 
+  resources :chats, only: [:show, :index, :destroy] do
+    member do
+      get :reveal
+    end
   end
 end

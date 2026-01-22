@@ -2,6 +2,8 @@ class PagesController < ApplicationController
   before_action :authenticate_user!
 
   def home
+    @chats = current_user.chats.order(created_at: :desc) # Para mostrar historial en sidebar
+
     return unless request.post?
 
     topic         = params[:topic]
@@ -9,8 +11,8 @@ class PagesController < ApplicationController
     tone          = params[:tone]
     slides_number = params[:slides_number]
 
-      prompt = build_prompt(topic, audience, tone, slides_number)
-      output = generate_presentation(prompt)
+    prompt = build_prompt(topic, audience, tone, slides_number)
+    output = generate_presentation(prompt)
 
     @chat = Chat.create!(
       user: current_user,
@@ -28,9 +30,24 @@ class PagesController < ApplicationController
       content: output
     )
     redirect_to chat_path(@chat)
+
+    # Generar archivo HTML Reveal.js descargable
+    html_content = render_to_string(
+      template: "chats/reveal_template",
+      locals: { chat: chat },
+      layout: false
+    )
+
+    chat.ppt_file.attach(
+      io: StringIO.new(html_content),
+      filename: "presentation_#{chat.id}.html",
+      content_type: "text/html"
+    )
+
+    redirect_to chat_path(chat)
   end
 
-private
+  private
 
   def build_prompt(topic, audience, tone, slides_number)
     <<~PROMPT
