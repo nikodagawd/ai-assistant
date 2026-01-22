@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title><%= chat.topic %> - Presentation</title>
+
+  <!-- Reveal.js CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.3.1/dist/reveal.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.3.1/dist/theme/solarized.css">
+</head>
+<body>
+
+<div class="reveal">
+  <div class="slides">
+    <% slides = chat.output.split(/Slide \d+:/).map(&:strip).reject(&:empty?) %>
+    <% slides.each_with_index do |slide, index| %>
+      <section>
+        <% lines = slide.lines.map(&:strip).reject(&:empty?) %>
+        <% if index == 0 %>
+          <h2><%= lines.join(" ") %></h2>
+        <% else %>
+          <h2><%= lines.shift %></h2>
+          <% lines.each do |line| %>
+            <p><%= line %></p>
+          <% end %>
+        <% end %>
+      </section>
+    <% end %>
+  </div>
+</div>
+
+<!-- Reveal.js JS -->
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@4.3.1/dist/reveal.min.js"></script>
+<script>
+  Reveal.initialize({
+    hash: false,
+    slideNumber: true,
+    transition: 'slide'
+  });
+</script>
+
+</body>
+</html>

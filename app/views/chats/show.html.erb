@@ -1,13 +1,23 @@
 <div class="container-fluid">
   <div class="row vh-100 g-0">
+
+    <!-- Sidebar: historial de chats -->
     <div class="col-md-3 bg-light border-end d-flex flex-column">
       <h5 class="p-3 border-bottom">Your chats</h5>
       <ul class="list-group list-group-flush flex-grow-1 overflow-auto">
-        <% current_user.chats.order(created_at: :desc).each do |chat| %>
-          <li class="list-group-item <%= 'active' if chat == @chat %>">
-            <%= link_to chat.topic,
-                        chat_path(chat),
-                        class: "text-decoration-none #{'text-white' if chat == @chat}" %>
+        <% current_user.chats.order(created_at: :desc).each do |chat_item| %>
+          <li class="list-group-item <%= 'active' if chat_item == @chat %>">
+            <%= link_to chat_item.topic,
+                        chat_path(chat_item),
+                        class: "text-decoration-none #{'text-white' if chat_item == @chat}" %>
+            <br>
+            <small class="text-muted"><%= chat_item.created_at.strftime("%b %d, %Y %H:%M") %></small>
+
+            <% if chat_item.attachment&.attached? %>
+              <div>
+                <small class="text-info">📎 Attached file</small>
+              </div>
+            <% end %>
           </li>
         <% end %>
       </ul>
@@ -15,19 +25,54 @@
         <%= link_to "New chat", root_path, class: "btn btn-outline-primary w-100" %>
       </div>
     </div>
+
+    <!-- Main content: chat + slides preview -->
     <div class="col-md-9 d-flex flex-column p-4">
+
+      <!-- Burbuja: tu input -->
       <div class="d-flex justify-content-end mb-3">
         <div class="bg-primary text-white p-3 rounded-3" style="max-width: 75%;">
           <strong>You</strong><br>
           <pre class="mb-0 text-white"><%= @chat.prompt %></pre>
         </div>
       </div>
+
+      <!-- Burbuja: respuesta AI -->
       <div class="d-flex justify-content-start mb-4">
-        <div class="bg-light border p-3 rounded-3" style="max-width: 75%;">
+        <div class="bg-light border p-3 rounded-3" style="max-width: 75%; width: 100%;">
           <strong>AI Assistant</strong><br>
-          <pre class="mb-0"><%= @chat.output %></pre>
+
+          <!-- Preview de slides con Reveal.js -->
+          <div class="reveal preview-reveal mb-2" style="height: 500px; border: 1px solid #ccc; border-radius: 8px; padding: 10px;">
+            <div class="slides">
+              <% slides = @chat.output.split(/Slide \d+:/).map(&:strip).reject(&:empty?) %>
+              <% slides.each_with_index do |slide, index| %>
+                <section>
+                  <% lines = slide.lines.map(&:strip).reject(&:empty?) %>
+                  <% if index == 0 %>
+                    <h2><%= lines.join(" ") %></h2>
+                  <% else %>
+                    <h2><%= lines.shift %></h2>
+                    <% lines.each do |line| %>
+                      <p><%= line %></p>
+                    <% end %>
+                  <% end %>
+                </section>
+              <% end %>
+            </div>
+          </div>
+
+          <!-- Botón para abrir slides en pantalla completa -->
+          <% if @chat.output.present? %>
+            <div class="mb-2 mt-2">
+              <%= link_to "View Fullscreen", reveal_chat_path(@chat), target: "_blank",
+                          class: "btn btn-outline-success btn-sm" %>
+            </div>
+          <% end %>
         </div>
       </div>
+
+      <!-- Formulario de feedback -->
       <div class="mt-auto">
         <%= form_with url: chat_path(@chat),
                       method: :patch,
@@ -41,6 +86,21 @@
           </div>
         <% end %>
       </div>
+
     </div>
   </div>
 </div>
+
+<!-- Reveal.js (preview) -->
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@4.3.1/dist/reveal.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.3.1/dist/reveal.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.3.1/dist/theme/solarized.css">
+
+<script>
+  Reveal.initialize({
+    embedded: true,       // Muy importante: evita pantalla completa
+    hash: false,
+    slideNumber: true,
+    transition: 'slide'
+  });
+</script>

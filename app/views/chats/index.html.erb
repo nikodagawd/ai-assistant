@@ -16,7 +16,23 @@
               <p class="text-end text-muted mb-3" style="font-size: 0.85rem;">
                 <%= chat.created_at.strftime("%b %d, %Y %H:%M") %>
               </p>
-              <%= link_to "View Presentation", chat_path(chat), class: "btn btn-primary mt-auto" %>
+
+
+            <div class="d-flex justify-content-between mt-auto align-items-center">
+  <%= link_to "View Presentation",
+              chat_path(chat),
+              class: "btn btn-primary btn-sm" %>
+
+  <%= button_to chat_path(chat),
+                method: :delete,
+                data: { turbo_confirm: "Are you sure you want to delete this presentation?" },
+                class: "btn btn-outline-danger btn-sm",
+                form: { style: "display:inline" } do %>
+    Delete
+  <% end %>
+</div>
+
+
             </div>
           </div>
         </div>

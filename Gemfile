@@ -7,6 +7,7 @@ gem 'devise'
 
 gem "openai"
 
+
 # ruby llm
 gem "ruby_llm", "~> 1.2.0"
 
