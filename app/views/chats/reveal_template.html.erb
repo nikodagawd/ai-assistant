@@ -4,7 +4,6 @@
   <meta charset="utf-8">
   <title><%= chat.topic %> - Presentation</title>
 
-
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.3.1/dist/reveal.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.3.1/dist/theme/solarized.css">
 </head>
@@ -12,23 +11,36 @@
 
 <div class="reveal">
   <div class="slides">
-    <% slides = chat.output.split(/Slide \d+:/).map(&:strip).reject(&:empty?) %>
-    <% slides.each_with_index do |slide, index| %>
-      <section>
-        <% lines = slide.lines.map(&:strip).reject(&:empty?) %>
-        <% if index == 0 %>
-          <h2><%= lines.join(" ") %></h2>
-        <% else %>
-          <h2><%= lines.shift %></h2>
-          <% lines.each do |line| %>
-            <p><%= line %></p>
+    <% # Tomar el mensaje del asistente como fuente de los slides %>
+    <% assistant_message = chat.messages.find_by(role: "assistant") %>
+    <% if assistant_message.present? %>
+      <% slides = assistant_message.content.to_s.split(/Slide \d+:/).map(&:strip).reject(&:empty?) %>
+    <% else %>
+      <% slides = [] %>
+    <% end %>
+
+    <% if slides.any? %>
+      <% slides.each_with_index do |slide, index| %>
+        <section>
+          <% lines = slide.lines.map(&:strip).reject(&:empty?) %>
+          <% if index == 0 %>
+            <h2><%= lines.join(" ") %></h2>
+          <% else %>
+            <h2><%= lines.shift %></h2>
+            <% lines.each do |line| %>
+              <p><%= line %></p>
+            <% end %>
           <% end %>
-        <% end %>
+        </section>
+      <% end %>
+    <% else %>
+      <section>
+        <h2>Preview</h2>
+        <p>No slides detected. Make sure your AI generated content includes "Slide 1:", "Slide 2:", etc.</p>
       </section>
     <% end %>
   </div>
 </div>
-
 
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.3.1/dist/reveal.min.js"></script>
 <script>
