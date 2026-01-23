@@ -1,8 +1,13 @@
 class PagesController < ApplicationController
   before_action :authenticate_user!
 
+<<<<<<< HEAD
 def home
   @chats = current_user.chats.order(created_at: :desc)
+=======
+  def home
+    @chats = current_user.chats.order(created_at: :desc)
+>>>>>>> 6e7cb94f7a1ece5292441043ce6669827229dcf9
 
   return unless request.post?
 
@@ -14,6 +19,7 @@ def home
   prompt = build_prompt(topic, audience, tone, slides_number)
   output = generate_presentation(prompt)
 
+<<<<<<< HEAD
   @chat = Chat.create!(
     user: current_user,
     topic: topic,
@@ -39,6 +45,38 @@ def home
 
   redirect_to chat_path(@chat)
 end
+=======
+   
+    @chat = Chat.create!(
+      user: current_user,
+      topic: topic,
+      audience: audience,
+      tone: tone,
+      slides_number: slides_number
+    )
+
+
+    @chat.messages.create!(role: "user", content: prompt)
+    @chat.messages.create!(role: "assistant", content: output)
+
+
+    html_content = render_to_string(
+      template: "chats/reveal_template",
+      locals: { chat: @chat },
+      layout: false
+    )
+
+
+    @chat.ppt_file.attach(
+      io: StringIO.new(html_content),
+      filename: "presentation_#{@chat.id}.html",
+      content_type: "text/html"
+    )
+
+
+    redirect_to chat_path(@chat)
+  end
+>>>>>>> 6e7cb94f7a1ece5292441043ce6669827229dcf9
 
   private
 
