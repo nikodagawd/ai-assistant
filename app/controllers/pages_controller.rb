@@ -2,7 +2,7 @@ class PagesController < ApplicationController
   before_action :authenticate_user!
 
   def home
-    @chats = current_user.chats.order(created_at: :desc) # Para mostrar historial en sidebar
+    @chats = current_user.chats.order(created_at: :desc) 
 
     return unless request.post?
 
@@ -31,7 +31,7 @@ class PagesController < ApplicationController
     )
     redirect_to chat_path(@chat)
 
-    # Generar archivo HTML Reveal.js descargable
+
     html_content = render_to_string(
       template: "chats/reveal_template",
       locals: { chat: chat },

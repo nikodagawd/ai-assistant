@@ -2,38 +2,46 @@
   <div class="row vh-100 g-0">
 
 
-    <div class="col-md-3 bg-light border-end d-flex flex-column">
-      <h5 class="p-3 border-bottom">Your chats</h5>
-      <ul class="list-group flex-grow-1 overflow-auto m-0">
+    <div class="col-md-3 bg-light border-end d-flex flex-column" style="max-height: 100vh;">
+      <h5 class="p-3 border-bottom fw-bold" style="background: #fff3e6;">Your presentations</h5>
+
+      <ul class="list-group flex-grow-1 overflow-auto m-0" style="max-height: calc(100vh - 120px);">
         <% @chats.each do |chat| %>
-          <li class="list-group-item d-flex justify-content-between align-items-center">
-            <div>
-              <%= link_to chat.topic, chat_path(chat), class: "text-decoration-none" %>
-              <br>
-              <small class="text-muted"><%= chat.created_at.strftime("%b %d, %Y %H:%M") %></small>
-              <% if chat.attachment&.attached? %>
-                <div><small class="text-info">📎 Attached file</small></div>
-              <% end %>
-            </div>
-
-
+          <li class="list-group-item">
+            <%= link_to chat.topic, chat_path(chat), class: "text-decoration-none fw-semibold" %>
+            <br>
+            <small class="text-muted"><%= chat.created_at.strftime("%b %d, %Y %H:%M") %></small>
+            <% if chat.attachment&.attached? %>
+              <div><small class="text-info">📎 File attached</small></div>
+            <% end %>
           </li>
         <% end %>
       </ul>
 
-      <div class="p-3 border-top">
-        <%= link_to "New chat", root_path, class: "btn btn-outline-primary w-100" %>
+      <div class="p-3 border-top" style="background: #fff3e6;">
+        <%= link_to "New presentation", root_path, class: "btn btn-gradient w-100 fw-bold" %>
       </div>
     </div>
 
 
-    <div class="col-md-9 d-flex flex-column">
-      <%= form_with url: "/", method: :post, local: true, html: { multipart: true }, class: "flex-shrink-0 p-3" do |f| %>
-        <div class="mb-2">
-          <%= f.text_area :topic, class: "form-control", placeholder: "Enter your topic...", rows: 2 %>
+    <div class="col-md-9 d-flex flex-column p-5"
+         style="background: linear-gradient(135deg, #fdf6f0cc, #e9edf8cc); backdrop-filter: blur(6px);">
+
+
+      <div class="mb-4">
+        <h1 class="fw-bold mb-1" style="color: #6b5b95;">Presentation Generator</h1>
+        <p class="text-muted">
+          Create elegant, professional presentations — guided by your AI presentation coach.
+        </p>
+      </div>
+
+      
+      <%= form_with url: "/", method: :post, local: true, html: { multipart: true } do |f| %>
+        <div class="mb-3">
+          <%= f.text_area :topic, class: "form-control", placeholder: "What is your presentation about?", rows: 2 %>
         </div>
 
-        <div class="row g-2 mb-3">
+        <div class="row g-3 mb-3">
           <div class="col-md-3">
             <%= f.label :audience, "Audience" %>
             <%= f.select :audience, ["Students", "Professionals", "Investors"], {}, class: "form-select" %>
@@ -58,10 +66,22 @@
         </div>
 
         <div class="text-end">
-          <%= f.submit "Generate Presentation", class: "btn btn-primary" %>
+          <%= f.submit "Generate presentation", class: "btn btn-gradient px-4 fw-bold" %>
         </div>
       <% end %>
     </div>
 
   </div>
 </div>
+
+<style>
+.btn-gradient {
+  background: linear-gradient(90deg, #ffb347, #ffcc70);
+  border: none;
+  color: white;
+  font-weight: 600;
+}
+.btn-gradient:hover {
+  background: linear-gradient(90deg, #ffcc70, #ffb347);
+}
+</style>
