@@ -1,7 +1,5 @@
 <div class="container-fluid">
   <div class="row vh-100 g-0">
-
-
     <div class="col-md-3 border-end d-flex flex-column" style="max-height: 100vh; background: #fff8f0;">
       <h5 class="p-3 border-bottom fw-bold" style="background: #ffe5d9;">Your chats</h5>
 
@@ -9,9 +7,8 @@
         <% current_user.chats.order(created_at: :desc).each do |chat_item| %>
           <li class="list-group-item <%= 'active' if chat_item == @chat %>"
               style="background: <%= chat_item == @chat ? '#ffd6ba' : '#fff' %>;">
-            <%= link_to chat_item.topic,
-                        chat_path(chat_item),
-                        class: "text-decoration-none fw-semibold #{'text-dark' if chat_item == @chat}" %>
+            <%= link_to chat_item.topic, chat_path(chat_item),
+                class: "text-decoration-none fw-semibold #{'text-dark' if chat_item == @chat}" %>
             <br>
             <small class="text-muted"><%= chat_item.created_at.strftime("%b %d, %Y %H:%M") %></small>
 
@@ -29,15 +26,13 @@
       </div>
     </div>
 
-
     <div class="col-md-9 d-flex flex-column p-4 overflow-hidden"
          style="background: linear-gradient(135deg, #fff7f0cc, #fef6f0cc); backdrop-filter: blur(6px);">
 
-
       <div class="flex-grow-1 overflow-auto" style="min-height: 0;">
-        <% first_assistant = @messages.detect { |m| m.role == "assistant" } %>
 
         <% @messages.each do |message| %>
+
           <% if message.role == "user" %>
             <div class="d-flex justify-content-end mb-3">
               <div class="bg-gradient-user text-dark p-3 rounded-3" style="max-width: 75%;">
@@ -47,85 +42,76 @@
                 </div>
               </div>
             </div>
+
           <% else %>
+
             <div class="d-flex justify-content-start mb-4">
               <div class="bg-light border p-3 rounded-3 w-100" style="background: #fff3e6;">
                 <strong></strong><br>
 
+                <% slides_source = message.content.to_s %>
+                <% slides = slides_source.split(/Slide \d+:/).map(&:strip).reject(&:empty?) %>
 
-                <% if message == first_assistant %>
+                <% if slides.any? %>
                   <div class="reveal preview-reveal mb-2 mt-2"
+                       id="reveal-<%= message.id %>"
                        style="height: 500px; border-radius: 8px; padding: 10px;">
                     <div class="slides">
-                      <% slides_source = message.content.to_s %>
-                      <% slides = slides_source.split(/Slide \d+:/).map(&:strip).reject(&:empty?) %>
-
-                      <% if slides.any? %>
-                        <% slides.each_with_index do |slide, index| %>
-                          <section>
-                            <% lines = slide.lines.map(&:strip).reject(&:empty?) %>
-                            <% if index == 0 %>
-                              <h2><%= lines.join(" ") %></h2>
-                            <% else %>
-                              <h2><%= lines.shift %></h2>
-                              <% lines.each do |line| %>
-                                <p><%= line %></p>
-                              <% end %>
-                            <% end %>
-                          </section>
-                        <% end %>
-                      <% else %>
+                      <% slides.each_with_index do |slide, index| %>
                         <section>
-                          <h2>Preview</h2>
-                          <p>No slides detected (expected: "Slide 1:", "Slide 2:", etc.).</p>
+                          <% lines = slide.lines.map(&:strip).reject(&:empty?) %>
+                          <% if index == 0 %>
+                            <h2><%= lines.join(" ") %></h2>
+                          <% else %>
+                            <h2><%= lines.shift %></h2>
+                            <% lines.each do |line| %>
+                              <p><%= line %></p>
+                            <% end %>
+                          <% end %>
                         </section>
                       <% end %>
                     </div>
                   </div>
 
-                  <% if slides_source.present? %>
-                    <div class="mb-2 mt-2">
-                      <%= link_to "View Fullscreen",
-                                  reveal_chat_path(@chat),
-                                  target: "_blank",
-                                  class: "btn btn-outline-secondary btn-sm" %>
-                    </div>
-                  <% end %>
+                  <div class="mb-2 mt-2">
+                    <%= link_to "View Fullscreen",
+                        reveal_chat_path(@chat),
+                        target: "_blank",
+                        class: "btn btn-outline-secondary btn-sm" %>
+                  </div>
+                <% else %>
+                  <section>
+                    <h2>Preview</h2>
+                    <p>No slides detected (expected: "Slide 1:", "Slide 2:", etc.).</p>
+                  </section>
                 <% end %>
-
 
                 <div class="markdown">
                   <%= render_markdown(message.content) %>
                 </div>
               </div>
             </div>
+
           <% end %>
+
         <% end %>
       </div>
-
 
       <div class="pt-3 border-top">
         <%= form_with model: [@chat, @message], local: true, data: { turbo: false } do |f| %>
           <div class="input-group">
-            <%= f.text_field :content,
-                             class: "form-control",
-                             placeholder: "Ask a follow-up…" %>
+            <%= f.text_field :content, class: "form-control", placeholder: "Ask a follow-up…" %>
             <button class="btn btn-gradient-send" type="submit">Send</button>
           </div>
         <% end %>
       </div>
-
     </div>
-
   </div>
 </div>
 
-
 <div id="presentation-coach">
-  <img
-    src="https://static.vecteezy.com/ti/gratis-vektor/p1/9749645-lehrer-avatar-mann-symbol-cartoon-mannliches-profil-maskottchen-illustration-kopf-gesicht-business-user-logo-kostenlos-vektor.jpg"
-    class="coach-avatar"
-  >
+  <img src="https://static.vecteezy.com/ti/gratis-vektor/p1/9749645-lehrer-avatar-mann-symbol-cartoon-mannliches-profil-maskottchen-illustration-kopf-gesicht-business-user-logo-kostenlos-vektor.jpg"
+       class="coach-avatar">
   <div class="coach-bubble">
     <strong>Presentation Coach</strong><br>
     💡 Your title slide should clearly state the main conclusion.
@@ -133,86 +119,90 @@
 </div>
 
 <style>
-body {
-  background: radial-gradient(circle at top left, #fff7f0, #fef6f0);
-}
+  body {
+    background: radial-gradient(circle at top left, #fff7f0, #fef6f0);
+  }
 
-.btn-gradient {
-  background: linear-gradient(90deg, #ffb347, #ffcc70);
-  border: none;
-  color: white;
-  font-weight: 600;
-}
-.btn-gradient:hover {
-  background: linear-gradient(90deg, #ffcc70, #ffb347);
-}
+  .btn-gradient {
+    background: linear-gradient(90deg, #ffb347, #ffcc70);
+    border: none;
+    color: white;
+    font-weight: 600;
+  }
 
-.btn-gradient-send {
-  background: linear-gradient(90deg, #ffb199, #ffc4a3);
-  color: white;
-  border: none;
-}
-.btn-gradient-send:hover {
-  background: linear-gradient(90deg, #ffc4a3, #ffb199);
-}
+  .btn-gradient:hover {
+    background: linear-gradient(90deg, #ffcc70, #ffb347);
+  }
 
-.bg-gradient-user {
-  background: linear-gradient(90deg, #f8c8dc, #fcd9c7);
-}
+  .btn-gradient-send {
+    background: linear-gradient(90deg, #ffb199, #ffc4a3);
+    color: white;
+    border: none;
+  }
 
-#presentation-coach {
-  position: fixed;
-  bottom: 24px;
-  left: 24px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  z-index: 1000;
-}
+  .btn-gradient-send:hover {
+    background: linear-gradient(90deg, #ffc4a3, #ffb199);
+  }
 
-.coach-avatar {
-  width: 72px;
-  height: 72px;
-  border-radius: 50%;
-  border: 2px solid #ffb347;
-  background: white;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-}
+  .bg-gradient-user {
+    background: linear-gradient(90deg, #f8c8dc, #fcd9c7);
+  }
 
-.coach-bubble {
-  background: white;
-  padding: 12px 16px;
-  border-radius: 14px;
-  max-width: 260px;
-  font-size: 0.85rem;
-  box-shadow: 0 12px 30px rgba(0,0,0,0.12);
-}
+  #presentation-coach {
+    position: fixed;
+    bottom: 24px;
+    left: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    z-index: 1000;
+  }
+
+  .coach-avatar {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    border: 2px solid #ffb347;
+    background: white;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+  }
+
+  .coach-bubble {
+    background: white;
+    padding: 12px 16px;
+    border-radius: 14px;
+    max-width: 260px;
+    font-size: 0.85rem;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.12);
+  }
 </style>
-
 
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.3.1/dist/reveal.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.3.1/dist/reveal.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.3.1/dist/theme/solarized.css">
 
 <script>
-Reveal.initialize({
-  embedded: true,
-  hash: false,
-  slideNumber: true,
-  transition: 'slide'
-})
+  document.querySelectorAll(".reveal").forEach((deck) => {
+    Reveal.initialize({
+      embedded: true,
+      hash: false,
+      slideNumber: true,
+      transition: "slide"
+    })
+  })
 
-const tips = [
-  "Use one clear idea per slide.",
-  "Slide titles should state the takeaway.",
-  "Short pauses increase impact.",
-  "Less text builds more authority.",
-  "End with a clear call to action."
-]
+  const tips = [
+    "Use one clear idea per slide.",
+    "Slide titles should state the takeaway.",
+    "Short pauses increase impact.",
+    "Less text builds more authority.",
+    "End with a clear call to action."
+  ]
 
-const bubble = document.querySelector(".coach-bubble")
-setInterval(() => {
-  const tip = tips[Math.floor(Math.random() * tips.length)]
-  bubble.innerHTML = `<strong>Presentation Coach</strong><br>💡 ${tip}`
-}, 7000)
+  const bubble = document.querySelector(".coach-bubble")
+
+  setInterval(() => {
+    const tip = tips[Math.floor(Math.random() * tips.length)]
+    bubble.innerHTML = `<strong>Presentation Coach</strong><br>💡 ${tip}`
+  }, 7000)
 </script>
