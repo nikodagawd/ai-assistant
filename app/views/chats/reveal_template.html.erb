@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title><%= @chat.topic %> - Presentation</title>
+  <title><%= chat.topic %> - Presentation</title>
 
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.3.1/dist/reveal.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.3.1/dist/theme/solarized.css">
@@ -11,46 +11,26 @@
 
 <div class="reveal">
   <div class="slides">
-<<<<<<< HEAD
-    <% output = @chat.messages.where(role: "assistant").order(:created_at).last&.content.to_s %>
-    <% slides = output.split(/Slide \d+:/).map(&:strip).reject(&:empty?) %>
-    <% slides.each_with_index do |slide, index| %>
-      <section>
-        <% lines = slide.lines.map(&:strip).reject(&:empty?) %>
-        <% if index == 0 %>
-          <h2><%= lines.join(" ") %></h2>
-        <% else %>
-          <h2><%= lines.shift %></h2>
-          <% lines.each do |line| %>
-            <p><%= line %></p>
-=======
-    <% # Tomar el mensaje del asistente como fuente de los slides %>
-    <% assistant_message = chat.messages.find_by(role: "assistant") %>
-    <% if assistant_message.present? %>
-      <% slides = assistant_message.content.to_s.split(/Slide \d+:/).map(&:strip).reject(&:empty?) %>
-    <% else %>
-      <% slides = [] %>
-    <% end %>
+    <% output = chat.messages.where(role: "assistant").order(:created_at).last&.content.to_s %>
+
+    <% slides_block = output.split("===HANDOUT===")[0].to_s.sub("===SLIDES===", "").strip %>
+    <% slide_split_regex = /(?:^|\n)\s*Slide\s+\d+\s*:\s*(?:\n|$)/i %>
+    <% slides = slides_block.split(slide_split_regex).map(&:strip).reject(&:empty?) %>
 
     <% if slides.any? %>
       <% slides.each_with_index do |slide, index| %>
         <section>
           <% lines = slide.lines.map(&:strip).reject(&:empty?) %>
-          <% if index == 0 %>
-            <h2><%= lines.join(" ") %></h2>
-          <% else %>
-            <h2><%= lines.shift %></h2>
-            <% lines.each do |line| %>
-              <p><%= line %></p>
-            <% end %>
->>>>>>> 6e7cb94f7a1ece5292441043ce6669827229dcf9
+          <h2><%= lines.shift || "Slide #{index + 1}" %></h2>
+          <% lines.each do |line| %>
+            <p><%= line.sub(/\A[-*•]\s+/, "") %></p>
           <% end %>
         </section>
       <% end %>
     <% else %>
       <section>
-        <h2>Preview</h2>
-        <p>No slides detected. Make sure your AI generated content includes "Slide 1:", "Slide 2:", etc.</p>
+        <h2>No slides detected</h2>
+        <pre style="white-space: pre-wrap;"><%= output %></pre>
       </section>
     <% end %>
   </div>
@@ -58,11 +38,12 @@
 
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.3.1/dist/reveal.min.js"></script>
 <script>
-  Reveal.initialize({
+  const deck = new Reveal(document.querySelector(".reveal"), {
     hash: false,
     slideNumber: true,
-    transition: 'slide'
+    transition: "slide"
   });
+  deck.initialize();
 </script>
 
 </body>

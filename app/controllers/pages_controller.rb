@@ -1,52 +1,29 @@
 class PagesController < ApplicationController
   before_action :authenticate_user!
 
-<<<<<<< HEAD
-def home
-  @chats = current_user.chats.order(created_at: :desc)
-=======
   def home
     @chats = current_user.chats.order(created_at: :desc)
->>>>>>> 6e7cb94f7a1ece5292441043ce6669827229dcf9
+    return unless request.post?
 
-  return unless request.post?
+    topic         = params[:topic].to_s
+    audience      = params[:audience].to_s
+    tone          = params[:tone].to_s
+    slides_number = params[:slides_number].to_s
+    persona       = params[:role].to_s
+    persona       = "Presenter" if persona.blank?
 
-  topic         = params[:topic]
-  audience      = params[:audience]
-  tone          = params[:tone]
-  slides_number = params[:slides_number]
+    # Clean summary shown to the user (stored as the user message)
+    display_prompt = <<~TEXT
+      Create a presentation with EXACTLY #{slides_number} slides about: "#{topic}"
+      Audience: #{audience}
+      Tone: #{tone}
+      Persona: #{persona}
+    TEXT
 
-  prompt = build_prompt(topic, audience, tone, slides_number)
-  output = generate_presentation(prompt)
+    # Hidden strict prompt sent to the LLM
+    llm_prompt = build_prompt(topic, audience, tone, slides_number, persona)
+    output = generate_presentation(llm_prompt)
 
-<<<<<<< HEAD
-  @chat = Chat.create!(
-    user: current_user,
-    topic: topic,
-    audience: audience,
-    tone: tone,
-    slides_number: slides_number
-  )
-
-  @chat.messages.create!(role: "user", content: prompt)
-  @chat.messages.create!(role: "assistant", content: output)
-
-  html_content = render_to_string(
-    template: "chats/reveal_template",
-    locals: { chat: @chat }, # then use `chat` in the template
-    layout: false
-  )
-
-  @chat.ppt_file.attach(
-    io: StringIO.new(html_content),
-    filename: "presentation_#{@chat.id}.html",
-    content_type: "text/html"
-  )
-
-  redirect_to chat_path(@chat)
-end
-=======
-   
     @chat = Chat.create!(
       user: current_user,
       topic: topic,
@@ -55,10 +32,8 @@ end
       slides_number: slides_number
     )
 
-
-    @chat.messages.create!(role: "user", content: prompt)
+    @chat.messages.create!(role: "user", content: display_prompt)
     @chat.messages.create!(role: "assistant", content: output)
-
 
     html_content = render_to_string(
       template: "chats/reveal_template",
@@ -66,28 +41,54 @@ end
       layout: false
     )
 
-
     @chat.ppt_file.attach(
       io: StringIO.new(html_content),
       filename: "presentation_#{@chat.id}.html",
       content_type: "text/html"
     )
 
-
     redirect_to chat_path(@chat)
   end
->>>>>>> 6e7cb94f7a1ece5292441043ce6669827229dcf9
 
   private
 
-  def build_prompt(topic, audience, tone, slides_number)
+  def build_prompt(topic, audience, tone, slides_number, persona)
     <<~PROMPT
-      Create a presentation outline and populate each slide with content on the topic "#{topic}".
-      The content for each of the slides shouldnt be exhaustive but should include the key points that should be mentioned along with sub-bullets on each point.
+      You are generating content for a web app that renders a Reveal.js slideshow AND shows a Markdown handout below it.
+
+      Create a presentation with EXACTLY #{slides_number} slides about: "#{topic}"
       Audience: #{audience}
       Tone: #{tone}
-      Number of slides: #{slides_number}
-      Output in Markdown.
+      Persona: #{persona}
+
+      Persona guidance:
+      - Write as if you are the Persona above.
+      - Adjust vocabulary, depth, and framing to fit that Persona.
+      - Stay appropriate for the stated audience and tone.
+
+      OUTPUT REQUIREMENTS:
+      Return exactly TWO sections in this order and with these exact headings:
+
+      ===SLIDES===
+      ===HANDOUT===
+
+      Do not output anything before ===SLIDES=== or after the handout.
+
+      SECTION 1: ===SLIDES=== (parsed by code, strict)
+      - Each slide MUST start with exactly: Slide X:
+      - Next line is the title (one line)
+      - Then 3 to 6 short bullet lines (but DO NOT use Markdown symbols like -, *, #)
+      - Blank line between slides is allowed
+
+      SECTION 2: ===HANDOUT=== (beautiful Markdown)
+      - Start with an H1 title
+      - One paragraph executive summary
+      - A table of contents (Markdown links)
+      - For each slide:
+        - H2: Slide X: <Title>
+        - Bullets with sub-bullets
+        - Optional speaker note as a blockquote
+      - End with "Key takeaways" (3 to 5 bullets)
     PROMPT
   end
 

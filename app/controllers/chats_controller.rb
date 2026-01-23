@@ -7,21 +7,25 @@ class ChatsController < ApplicationController
   end
 
   def show
-    @chat = Chat.find(params[:id])
     @messages = @chat.messages.order(:created_at)
-    @message = Message.new
-    @chats = current_user.chats.order(created_at: :desc)
+    @message  = Message.new
+    @chats    = current_user.chats.order(created_at: :desc)
   end
 
   def reveal
-    
+    # renders chats/reveal.html.erb (or whatever your route points to)
+    render template: "chats/reveal_template", locals: { chat: @chat }, layout: false
   end
 
   def update
     if @chat.update(chat_params)
       redirect_to chat_path(@chat), notice: "Feedback sent!"
     else
-      render :show, alert: "Could not send feedback"
+      @messages = @chat.messages.order(:created_at)
+      @message  = Message.new
+      @chats    = current_user.chats.order(created_at: :desc)
+      flash.now[:alert] = "Could not send feedback"
+      render :show, status: :unprocessable_entity
     end
   end
 

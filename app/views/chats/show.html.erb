@@ -30,6 +30,8 @@
          style="background: linear-gradient(135deg, #fff7f0cc, #fef6f0cc); backdrop-filter: blur(6px);">
 
       <div class="flex-grow-1 overflow-auto" style="min-height: 0;">
+        <% slide_split_regex = /(?:^|\n)\s*Slide\s+\d+\s*:\s*(?:\n|$)/i %>
+        <% latest_assistant_id = @messages.where(role: "assistant").last&.id %>
 
         <% @messages.each do |message| %>
 
@@ -44,51 +46,65 @@
             </div>
 
           <% else %>
-
             <div class="d-flex justify-content-start mb-4">
               <div class="bg-light border p-3 rounded-3 w-100" style="background: #fff3e6;">
-                <strong></strong><br>
+                <strong>Assistant</strong><br>
 
-                <% slides_source = message.content.to_s %>
-                <% slides = slides_source.split(/Slide \d+:/).map(&:strip).reject(&:empty?) %>
+                <% raw = message.content.to_s %>
+                <% has_slides = raw.include?("===SLIDES===") %>
+                <% has_handout = raw.include?("===HANDOUT===") %>
 
-                <% if slides.any? %>
+                <% slides_block = "" %>
+                <% handout_md = "" %>
+
+                <% if has_slides %>
+                  <% slides_block = raw.split("===HANDOUT===")[0].to_s.sub("===SLIDES===", "").strip %>
+                <% end %>
+
+                <% if has_handout %>
+                  <% handout_md = raw.split("===HANDOUT===")[1].to_s.strip %>
+                <% end %>
+
+                <% slides = slides_block.split(slide_split_regex).map(&:strip).reject(&:empty?) %>
+
+                <%# Only show the Reveal preview + fullscreen button for the latest assistant message %>
+                <% if message.id == latest_assistant_id && slides.any? %>
                   <div class="reveal preview-reveal mb-2 mt-2"
+                       data-controller="reveal"
                        id="reveal-<%= message.id %>"
-                       style="height: 500px; border-radius: 8px; padding: 10px;">
+                       style="height: 500px; border-radius: 8px; padding: 10px; overflow: hidden;">
                     <div class="slides">
                       <% slides.each_with_index do |slide, index| %>
                         <section>
                           <% lines = slide.lines.map(&:strip).reject(&:empty?) %>
-                          <% if index == 0 %>
-                            <h2><%= lines.join(" ") %></h2>
-                          <% else %>
-                            <h2><%= lines.shift %></h2>
-                            <% lines.each do |line| %>
-                              <p><%= line %></p>
-                            <% end %>
+                          <h2><%= lines.shift || "Slide #{index + 1}" %></h2>
+                          <% lines.each do |line| %>
+                            <p><%= line.sub(/\A[-*•]\s+/, "") %></p>
                           <% end %>
                         </section>
                       <% end %>
                     </div>
                   </div>
 
-                  <div class="mb-2 mt-2">
+                  <div class="mb-2">
                     <%= link_to "View Fullscreen",
                         reveal_chat_path(@chat),
+                        data: { turbo: false },
                         target: "_blank",
                         class: "btn btn-outline-secondary btn-sm" %>
                   </div>
-                <% else %>
-                  <section>
-                    <h2>Preview</h2>
-                    <p>No slides detected (expected: "Slide 1:", "Slide 2:", etc.).</p>
-                  </section>
+                <% elsif message.id == latest_assistant_id && !slides.any? %>
+                  <div class="alert alert-warning mt-2 mb-2">
+                    <strong>No slides detected.</strong>
+                    The latest assistant message did not include the required <code>===SLIDES===</code> format.
+                  </div>
                 <% end %>
 
-                <div class="markdown">
-                  <%= render_markdown(message.content) %>
+                <%# Render the HANDOUT markdown only if it exists; otherwise render the raw assistant reply as markdown %>
+                <div class="markdown mt-3">
+                  <%= render_markdown(has_handout ? handout_md : raw) %>
                 </div>
+
               </div>
             </div>
 
@@ -105,6 +121,7 @@
           </div>
         <% end %>
       </div>
+
     </div>
   </div>
 </div>
@@ -175,34 +192,8 @@
     font-size: 0.85rem;
     box-shadow: 0 12px 30px rgba(0,0,0,0.12);
   }
+
+  .markdown ul { padding-left: 1.2rem; margin-bottom: 0.75rem; }
+  .markdown li { margin-bottom: 0.25rem; }
+  .markdown p  { margin-bottom: 0.5rem; }
 </style>
-
-<script src="https://cdn.jsdelivr.net/npm/reveal.js@4.3.1/dist/reveal.min.js"></script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.3.1/dist/reveal.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.3.1/dist/theme/solarized.css">
-
-<script>
-  document.querySelectorAll(".reveal").forEach((deck) => {
-    Reveal.initialize({
-      embedded: true,
-      hash: false,
-      slideNumber: true,
-      transition: "slide"
-    })
-  })
-
-  const tips = [
-    "Use one clear idea per slide.",
-    "Slide titles should state the takeaway.",
-    "Short pauses increase impact.",
-    "Less text builds more authority.",
-    "End with a clear call to action."
-  ]
-
-  const bubble = document.querySelector(".coach-bubble")
-
-  setInterval(() => {
-    const tip = tips[Math.floor(Math.random() * tips.length)]
-    bubble.innerHTML = `<strong>Presentation Coach</strong><br>💡 ${tip}`
-  }, 7000)
-</script>
