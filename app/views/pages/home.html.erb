@@ -31,11 +31,11 @@
       <div class="mb-4">
         <h1 class="fw-bold mb-1" style="color: #6b5b95;">Presentation Generator</h1>
         <p class="text-muted">
-          Create elegant, professional presentations — guided by your AI presentation coach.
+          Create presentations in seconds - guided by your presentation coach.
         </p>
       </div>
 
-      
+
       <%= form_with url: "/", method: :post, local: true, html: { multipart: true } do |f| %>
         <div class="mb-3">
           <%= f.text_area :topic, class: "form-control", placeholder: "What is your presentation about?", rows: 2 %>
